@@ -4,7 +4,7 @@ import InteractiveChart from "./InteractiveChart";
 import ResultCards from "./ResultCards";
 import WaveformSVG from "./WaveformSVG";
 import { WaveformType, waveformDefaults } from "../data/inkjetData";
-import { getBipolarPrediction, getSinusoidalPrediction, getUnipolarPrediction } from "../utils/interpolation";
+import { getSinusoidalPrediction, getUnipolarPrediction } from "../utils/interpolation";
 
 export default function Simulator() {
   const [waveform, setWaveform] = useState<WaveformType>("Sinusoidal");
@@ -12,7 +12,6 @@ export default function Simulator() {
   const [cycleTime, setCycleTime] = useState(waveformDefaults.Sinusoidal.cycleTime);
 
   const prediction = useMemo(() => {
-    if (waveform === "Bipolar") return getBipolarPrediction(voltage, cycleTime);
     if (waveform === "Unipolar") return getUnipolarPrediction(voltage, cycleTime);
     return getSinusoidalPrediction(voltage, cycleTime);
   }, [waveform, voltage, cycleTime]);

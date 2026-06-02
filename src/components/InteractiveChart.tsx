@@ -1,7 +1,5 @@
-import { useMemo, useState } from "react";
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ReferenceDot,
@@ -13,9 +11,6 @@ import {
 import {
   Prediction,
   WaveformType,
-  bipolarData,
-  sinusoidalCycleData,
-  sinusoidalCycleEndpoints,
   sinusoidalVoltageData,
   sinusoidalVoltageEndpoints,
   unipolarBaselineData,
@@ -27,38 +22,84 @@ interface InteractiveChartProps {
   prediction: Prediction;
 }
 
-type ChartTab = "voltage" | "cycle";
+type MetricKey = "diameter" | "speed";
+
+interface ChartPoint {
+  x: number;
+  diameter: number;
+  speed: number;
+  status: string;
+}
+
+interface EndpointPoint {
+  x: number;
+  diameter: number;
+  speed: number;
+  status: string;
+}
 
 export default function InteractiveChart({ waveform, prediction }: InteractiveChartProps) {
-  const [sinusoidalTab, setSinusoidalTab] = useState<ChartTab>("voltage");
-  const chart = useMemo(() => buildChart(waveform, prediction, sinusoidalTab), [waveform, prediction, sinusoidalTab]);
+  const chart = buildVoltageChart(waveform, prediction);
+
+  return (
+    <section className="chart-stack" aria-label="Voltage sweep charts">
+      <SingleMetricChart
+        chart={chart}
+        color="#1d64c8"
+        metric="diameter"
+        prediction={prediction}
+        title={waveform === "Sinusoidal" ? "Droplet diameter vs voltage" : "Baseline diameter vs voltage"}
+        unit="µm"
+        yDomain={chart.diameterDomain}
+        yLabel="Diameter (µm)"
+      />
+      <SingleMetricChart
+        chart={chart}
+        color="#c83d3d"
+        metric="speed"
+        prediction={prediction}
+        title={waveform === "Sinusoidal" ? "Ejection speed vs voltage" : "Baseline speed vs voltage"}
+        unit="m/s"
+        yDomain={chart.speedDomain}
+        yLabel="Speed (m/s)"
+      />
+    </section>
+  );
+}
+
+function SingleMetricChart({
+  chart,
+  color,
+  metric,
+  prediction,
+  title,
+  unit,
+  yDomain,
+  yLabel,
+}: {
+  chart: ReturnType<typeof buildVoltageChart>;
+  color: string;
+  metric: MetricKey;
+  prediction: Prediction;
+  title: string;
+  unit: string;
+  yDomain: [number, number];
+  yLabel: string;
+}) {
+  const currentValue = metric === "diameter" ? prediction.diameter : prediction.speed ?? 0;
 
   return (
     <section className="visual-card chart-card">
       <div className="section-heading">
         <div>
-          <h2>{chart.title}</h2>
+          <h2>{title}</h2>
           <p>{chart.caption}</p>
         </div>
-        {waveform === "Sinusoidal" && (
-          <div className="tab-control" aria-label="Sinusoidal chart mode">
-            <button
-              className={sinusoidalTab === "voltage" ? "active" : ""}
-              onClick={() => setSinusoidalTab("voltage")}
-              type="button"
-            >
-              Voltage
-            </button>
-            <button className={sinusoidalTab === "cycle" ? "active" : ""} onClick={() => setSinusoidalTab("cycle")} type="button">
-              Cycle time
-            </button>
-          </div>
-        )}
       </div>
 
       <div className="chart-wrap">
-        <ResponsiveContainer height={340} width="100%">
-          <LineChart data={chart.data} margin={{ top: 24, right: 42, bottom: 20, left: 4 }}>
+        <ResponsiveContainer height={320} width="100%">
+          <LineChart data={chart.data} margin={{ top: 20, right: 28, bottom: 20, left: 4 }}>
             <CartesianGrid stroke="#e1e7ef" strokeDasharray="3 3" />
             <XAxis
               dataKey="x"
@@ -69,75 +110,51 @@ export default function InteractiveChart({ waveform, prediction }: InteractiveCh
               unit={chart.xUnit}
             />
             <YAxis
-              domain={chart.diameterDomain}
-              label={{ value: "Diameter (\u00b5m)", angle: -90, position: "insideLeft" }}
-              stroke="#1d64c8"
+              domain={yDomain}
+              label={{ value: yLabel, angle: -90, position: "insideLeft" }}
+              stroke={color}
               tickLine={false}
-              yAxisId="diameter"
-            />
-            <YAxis
-              domain={chart.speedDomain}
-              label={{ value: "Speed (m/s)", angle: 90, position: "insideRight" }}
-              orientation="right"
-              stroke="#c83d3d"
-              tickLine={false}
-              yAxisId="speed"
             />
             <Tooltip
               content={({ active, payload, label }) => {
                 if (!active || !payload?.length) return null;
-                const status = payload[0]?.payload?.status;
+                const point = payload[0]?.payload as ChartPoint | undefined;
+                const value = Number(payload[0]?.value ?? 0);
                 return (
                   <div className="chart-tooltip">
                     <strong>
                       {chart.xLabel}: {label}
                       {chart.xUnit}
                     </strong>
-                    {payload.map((item) => (
-                      <span key={item.dataKey as string} style={{ color: item.color }}>
-                        {item.name}: {Number(item.value).toFixed(2)}
-                      </span>
-                    ))}
-                    {status && <em>{status}</em>}
+                    <span style={{ color }}>
+                      {metric === "diameter" ? "Diameter" : "Speed"}: {value.toFixed(2)} {unit}
+                    </span>
+                    {point?.status && <em>{point.status}</em>}
                   </div>
                 );
               }}
             />
-            <Legend verticalAlign="top" />
             <Line
               activeDot={{ r: 6 }}
-              dataKey="diameter"
+              dataKey={metric}
               dot={{ r: 4 }}
               isAnimationActive={false}
-              name="Diameter"
-              stroke="#1d64c8"
+              name={metric === "diameter" ? "Diameter" : "Speed"}
+              stroke={color}
               strokeWidth={2.5}
               type="monotone"
-              yAxisId="diameter"
-            />
-            <Line
-              activeDot={{ r: 6 }}
-              dataKey="speed"
-              dot={{ r: 4 }}
-              isAnimationActive={false}
-              name="Speed"
-              stroke="#c83d3d"
-              strokeWidth={2.5}
-              type="monotone"
-              yAxisId="speed"
             />
             {chart.unstableData.map((point) => (
               <ReferenceDot
                 fill="#ffffff"
                 ifOverflow="extendDomain"
-                key={`${point.x}-${point.status}`}
+                key={`${metric}-${point.x}-${point.status}`}
                 r={6}
                 stroke="#e09b2f"
                 strokeDasharray="3 2"
                 strokeWidth={2}
                 x={point.x}
-                y={point.diameter}
-                yAxisId="diameter"
+                y={point[metric]}
               />
             ))}
             <ReferenceDot
@@ -147,8 +164,7 @@ export default function InteractiveChart({ waveform, prediction }: InteractiveCh
               stroke="#ffffff"
               strokeWidth={2}
               x={chart.currentX}
-              y={prediction.diameter}
-              yAxisId="diameter"
+              y={currentValue}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -157,65 +173,31 @@ export default function InteractiveChart({ waveform, prediction }: InteractiveCh
   );
 }
 
-function buildChart(waveform: WaveformType, prediction: Prediction, sinusoidalTab: ChartTab) {
-  if (waveform === "Sinusoidal" && sinusoidalTab === "cycle") {
-    const currentX = prediction.cycleTime;
-    return {
-      title: "Sinusoidal cycle-time sweep",
-      caption: "Fixed at 33 V; increasing cycle time increases droplet diameter.",
-      xLabel: "Cycle time",
-      xUnit: " \u00b5s",
-      currentX,
-      xDomain: [12, 24] as [number, number],
-      diameterDomain: [28, 56] as [number, number],
-      speedDomain: [0, 7] as [number, number],
-      data: sinusoidalCycleData.map((point) => ({ x: point.cycleTime, ...point })),
-      unstableData: sinusoidalCycleEndpoints.map((point) => ({
-        x: point.cycleTime,
-        diameter: interpolateSeries(sinusoidalCycleData, "cycleTime", "diameter", point.cycleTime < 15 ? 15 : 21),
-        status: point.status,
-      })),
-    };
-  }
-
+function buildVoltageChart(waveform: WaveformType, prediction: Prediction) {
   if (waveform === "Sinusoidal") {
-    const currentX = prediction.voltage;
     return {
-      title: "Sinusoidal voltage sweep",
-      caption: "Fixed at 15 \u00b5s; endpoints indicate under- and over-actuation.",
+      caption: "Fixed at 15 \u00b5s; open markers indicate unstable voltage endpoints.",
       xLabel: "Driving voltage",
       xUnit: " V",
-      currentX,
+      currentX: prediction.voltage,
       xDomain: [30, 48] as [number, number],
       diameterDomain: [28, 56] as [number, number],
       speedDomain: [0, 7] as [number, number],
       data: sinusoidalVoltageData.map((point) => ({ x: point.voltage, ...point })),
-      unstableData: sinusoidalVoltageEndpoints.map((point) => ({
-        x: point.voltage,
-        diameter: interpolateSeries(sinusoidalVoltageData, "voltage", "diameter", point.voltage < 33 ? 33 : 45),
-        status: point.status,
-      })),
-    };
-  }
-
-  if (waveform === "Bipolar") {
-    return {
-      title: "Bipolar compression-voltage sweep",
-      caption: "Expansion voltage is fixed at 33 V; weaker compression reduces droplet size.",
-      xLabel: "Compression voltage",
-      xUnit: " V",
-      currentX: prediction.voltage,
-      xDomain: [-33, -27] as [number, number],
-      diameterDomain: [28, 40] as [number, number],
-      speedDomain: [0, 3.5] as [number, number],
-      data: bipolarData.map((point) => ({ x: point.compressionVoltage, ...point })),
-      unstableData: [],
+      unstableData: sinusoidalVoltageEndpoints.map((point) => {
+        const voltage = point.voltage < 33 ? 33 : 45;
+        return {
+          x: point.voltage,
+          diameter: interpolateSeries(sinusoidalVoltageData, "voltage", "diameter", voltage),
+          speed: interpolateSeries(sinusoidalVoltageData, "voltage", "speed", voltage),
+          status: point.status,
+        };
+      }),
     };
   }
 
   return {
-    title: "Unipolar baseline marker",
-    caption: "Baseline reference around 60 \u00b5m; not a fully calibrated model.",
+    caption: "Unipolar is shown as an approximate baseline reference.",
     xLabel: "Drive voltage",
     xUnit: " V",
     currentX: prediction.voltage,
@@ -227,6 +209,6 @@ function buildChart(waveform: WaveformType, prediction: Prediction, sinusoidalTa
       { x: 35, diameter: unipolarBaselineData[0].diameter, speed: unipolarBaselineData[0].speed, status: "stable baseline" },
       { x: 45, diameter: 64, speed: 2.55, status: "approximate baseline" },
     ],
-    unstableData: [],
+    unstableData: [] as EndpointPoint[],
   };
 }

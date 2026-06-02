@@ -1,6 +1,5 @@
 import {
   Prediction,
-  bipolarData,
   nozzleDiameter,
   sinusoidalCycleData,
   sinusoidalVoltageData,
@@ -114,33 +113,6 @@ function unstableSinusoidal(voltage: number, cycleTime: number, status: string):
     status,
     statusTone: getStabilityStatus(status),
     note: "Output is shown at the nearest calibrated stable voltage for scale; jetting state is not stable.",
-  };
-}
-
-export function getBipolarPrediction(compressionVoltage: number, cycleTime: number): Prediction {
-  const interpolatedDiameter = interpolateSeries(bipolarData, "compressionVoltage", "diameter", compressionVoltage);
-  const interpolatedSpeed = interpolateSeries(bipolarData, "compressionVoltage", "speed", compressionVoltage);
-  const durationPenalty = Math.max(0, cycleTime - 15);
-  const diameter = interpolatedDiameter + 0.8 * durationPenalty;
-  const speed = Math.max(0.3, interpolatedSpeed - 0.04 * durationPenalty);
-  let status = compressionVoltage === -27 && cycleTime === 15 ? "Stable - minimum stable droplet" : "Stable bipolar jetting";
-  let statusTone: Prediction["statusTone"] = "stable";
-
-  if (cycleTime > 24) {
-    status = "Multiple droplet risk";
-    statusTone = "warning";
-  }
-
-  return {
-    waveform: "Bipolar",
-    voltage: compressionVoltage,
-    cycleTime,
-    diameter: rounded(diameter),
-    speed: rounded(speed),
-    ratio: rounded(calculateDropletNozzleRatio(diameter)),
-    status,
-    statusTone,
-    note: "Expansion voltage is held at 33 V; compression voltage is varied.",
   };
 }
 

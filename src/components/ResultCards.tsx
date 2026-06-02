@@ -8,10 +8,7 @@ export default function ResultCards({ prediction }: ResultCardsProps) {
   return (
     <section className="result-section" aria-label="Prediction results">
       <MetricCard label="Waveform" value={prediction.waveform} />
-      <MetricCard
-        label={prediction.waveform === "Bipolar" ? "Compression Voltage" : "Voltage"}
-        value={`${prediction.voltage} V`}
-      />
+      <MetricCard label="Voltage" value={`${prediction.voltage} V`} />
       <MetricCard
         label={prediction.waveform === "Unipolar" ? "Dwell Time" : "Cycle Time"}
         value={`${prediction.cycleTime} \u00b5s`}

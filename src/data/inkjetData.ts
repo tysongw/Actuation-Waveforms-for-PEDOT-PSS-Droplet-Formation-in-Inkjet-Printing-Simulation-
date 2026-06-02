@@ -1,4 +1,4 @@
-export type WaveformType = "Unipolar" | "Sinusoidal" | "Bipolar";
+export type WaveformType = "Unipolar" | "Sinusoidal";
 
 export type StabilityTone = "stable" | "warning" | "unstable" | "baseline";
 
@@ -41,12 +41,6 @@ export const sinusoidalCycleEndpoints = [
   { cycleTime: 24, diameter: null, speed: null, status: "multiple droplets" },
 ];
 
-export const bipolarData = [
-  { compressionVoltage: -33, diameter: 34.79, speed: 2.75, status: "stable" },
-  { compressionVoltage: -30, diameter: 32.82, speed: 2.0, status: "stable" },
-  { compressionVoltage: -27, diameter: 30.28, speed: 0.98, status: "stable" },
-];
-
 export const unipolarBaselineData = [
   { waveform: "Unipolar", diameter: 60.0, speed: 2.2, status: "stable baseline" },
 ] as const;
@@ -54,5 +48,4 @@ export const unipolarBaselineData = [
 export const waveformDefaults: Record<WaveformType, { voltage: number; cycleTime: number }> = {
   Unipolar: { voltage: 35, cycleTime: 12 },
   Sinusoidal: { voltage: 33, cycleTime: 15 },
-  Bipolar: { voltage: -27, cycleTime: 15 },
 };

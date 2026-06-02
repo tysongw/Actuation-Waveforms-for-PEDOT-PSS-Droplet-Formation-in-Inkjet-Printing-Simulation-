@@ -7,15 +7,13 @@ interface WaveformSVGProps {
 }
 
 export default function WaveformSVG({ waveform, voltage, cycleTime }: WaveformSVGProps) {
-  const title = waveform === "Bipolar" ? "Bipolar actuation waveform" : `${waveform} actuation waveform`;
+  const title = `${waveform} actuation waveform`;
 
   return (
     <section className="visual-card waveform-card">
       <div className="section-heading">
         <h2>{title}</h2>
-        <span>
-          {waveform === "Bipolar" ? `${voltage} V / ${cycleTime} \u00b5s` : `${voltage} V / ${cycleTime} \u00b5s`}
-        </span>
+        <span>{`${voltage} V / ${cycleTime} \u00b5s`}</span>
       </div>
       <svg aria-label={title} className="waveform-svg" role="img" viewBox="0 0 760 250">
         <line className="axis-line" x1="42" x2="720" y1="130" y2="130" />
@@ -28,7 +26,6 @@ export default function WaveformSVG({ waveform, voltage, cycleTime }: WaveformSV
         </text>
         {waveform === "Unipolar" && <UnipolarWaveform />}
         {waveform === "Sinusoidal" && <SinusoidalWaveform />}
-        {waveform === "Bipolar" && <BipolarWaveform />}
       </svg>
     </section>
   );
@@ -70,27 +67,6 @@ function SinusoidalWaveform() {
       </text>
       <text className="phase-label" x="386" y="208">
         repeated cycle
-      </text>
-    </>
-  );
-}
-
-function BipolarWaveform() {
-  return (
-    <>
-      <polyline className="wave-line" points="72,130 128,130 166,66 292,66 330,130 376,130 420,192 546,192 590,130 690,130" />
-      <line className="phase-line" x1="166" x2="166" y1="58" y2="205" />
-      <line className="phase-line" x1="330" x2="330" y1="58" y2="205" />
-      <line className="phase-line" x1="420" x2="420" y1="58" y2="205" />
-      <line className="phase-line" x1="590" x2="590" y1="58" y2="205" />
-      <text className="phase-label" x="188" y="208">
-        Expansion
-      </text>
-      <text className="phase-label" x="438" y="208">
-        compression
-      </text>
-      <text className="phase-label" x="594" y="208">
-        recovery
       </text>
     </>
   );

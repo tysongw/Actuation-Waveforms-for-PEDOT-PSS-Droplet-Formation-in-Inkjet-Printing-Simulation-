@@ -141,8 +141,7 @@ h2 {
   font-weight: 700;
 }
 
-.segmented-control,
-.tab-control {
+.segmented-control {
   display: grid;
   gap: 6px;
   padding: 4px;
@@ -152,16 +151,10 @@ h2 {
 }
 
 .segmented-control {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.tab-control {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  min-width: 220px;
 }
 
-.segmented-control button,
-.tab-control button {
+.segmented-control button {
   min-height: 38px;
   border: 0;
   border-radius: 6px;
@@ -175,8 +168,7 @@ h2 {
     box-shadow 160ms ease;
 }
 
-.segmented-control button.active,
-.tab-control button.active {
+.segmented-control button.active {
   background: #ffffff;
   color: #1d64c8;
   box-shadow: 0 3px 10px rgba(29, 100, 200, 0.12);
@@ -374,9 +366,14 @@ h2 {
   padding-bottom: 12px;
 }
 
+.chart-stack {
+  display: grid;
+  gap: 18px;
+}
+
 .chart-wrap {
   width: 100%;
-  height: 340px;
+  height: 320px;
 }
 
 .chart-tooltip {
@@ -423,11 +420,6 @@ h2 {
 
   .section-heading {
     display: grid;
-  }
-
-  .tab-control {
-    width: 100%;
-    min-width: 0;
   }
 
   .result-section {

@@ -9,18 +9,16 @@ interface ControlPanelProps {
   onCycleTimeChange: (cycleTime: number) => void;
 }
 
-const waveformOptions: WaveformType[] = ["Unipolar", "Sinusoidal", "Bipolar"];
+const waveformOptions: WaveformType[] = ["Unipolar", "Sinusoidal"];
 
 const voltageConfig = {
   Unipolar: { min: 25, max: 45, step: 1, label: "Drive Voltage", unit: "V" },
   Sinusoidal: { min: 30, max: 48, step: 1, label: "Driving Voltage", unit: "V" },
-  Bipolar: { min: -33, max: -27, step: 1, label: "Compression Voltage", unit: "V" },
 };
 
 const cycleConfig = {
   Unipolar: { min: 3, max: 30, step: 1, label: "Dwell Time", unit: "us" },
   Sinusoidal: { min: 12, max: 24, step: 1, label: "Cycle Time", unit: "us" },
-  Bipolar: { min: 15, max: 30, step: 1, label: "Total Waveform Duration", unit: "us" },
 };
 
 export default function ControlPanel({
@@ -85,11 +83,6 @@ export default function ControlPanel({
         )}
         {waveform === "Sinusoidal" && (
           <p>33 V at 15 &micro;s is marked as the optimized sinusoidal condition.</p>
-        )}
-        {waveform === "Bipolar" && (
-          <p>
-            Expansion voltage is fixed at 33 V. The optimized bipolar waveform uses 15 &micro;s total duration.
-          </p>
         )}
       </div>
     </aside>
