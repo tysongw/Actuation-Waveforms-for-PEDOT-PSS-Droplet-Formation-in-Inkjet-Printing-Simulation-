@@ -57,34 +57,20 @@ export function getStabilityStatus(status: string): Prediction["statusTone"] {
   return "unstable";
 }
 
-export function getSinusoidalPrediction(voltage: number, cycleTime: number): Prediction {
+export function getSinusoidalVoltagePrediction(voltage: number): Prediction {
+  const cycleTime = 15;
+
   if (voltage < 33) {
-    return unstableSinusoidal(voltage, cycleTime, "Under-actuated / unstable");
+    return unstableSinusoidalVoltage(voltage, "Under-actuated / unstable");
   }
 
   if (voltage > 45) {
-    return unstableSinusoidal(voltage, cycleTime, "Satellite droplets / over-actuated");
+    return unstableSinusoidalVoltage(voltage, "Satellite droplets / over-actuated");
   }
 
-  if (cycleTime < 15) {
-    return unstableSinusoidal(voltage, cycleTime, "Too short / unstable");
-  }
-
-  if (cycleTime > 21) {
-    return unstableSinusoidal(voltage, cycleTime, "Multiple droplets");
-  }
-
-  const voltageDiameter = interpolateSeries(sinusoidalVoltageData, "voltage", "diameter", voltage);
-  const cycleDiameter = interpolateSeries(sinusoidalCycleData, "cycleTime", "diameter", cycleTime);
-  const voltageSpeed = interpolateSeries(sinusoidalVoltageData, "voltage", "speed", voltage);
-  const cycleSpeed = interpolateSeries(sinusoidalCycleData, "cycleTime", "speed", cycleTime);
-  const printedDiameter = interpolateSeries(sinusoidalVoltageData, "voltage", "printedDiameter", voltage);
-  const referenceDiameter = 33.35;
-  const referenceSpeed = 1.56;
-  const diameter = clamp(referenceDiameter + (voltageDiameter - referenceDiameter) + (cycleDiameter - referenceDiameter), 30, 55);
-  const speed = clamp(referenceSpeed + (voltageSpeed - referenceSpeed) + (cycleSpeed - referenceSpeed), 0.5, 7);
-  const optimized = voltage === 33 && cycleTime === 15;
-  const status = optimized ? "Stable - optimized sinusoidal condition" : "Stable jetting window";
+  const diameter = interpolateSeries(sinusoidalVoltageData, "voltage", "diameter", voltage);
+  const speed = interpolateSeries(sinusoidalVoltageData, "voltage", "speed", voltage);
+  const status = voltage === 33 ? "Stable - optimized sinusoidal condition" : "Stable voltage sweep condition";
 
   return {
     waveform: "Sinusoidal",
@@ -92,14 +78,45 @@ export function getSinusoidalPrediction(voltage: number, cycleTime: number): Pre
     cycleTime,
     diameter: rounded(diameter),
     speed: rounded(speed),
-    printedDiameter: rounded(printedDiameter),
     ratio: rounded(calculateDropletNozzleRatio(diameter)),
     status,
     statusTone: "stable",
+    fixedParameterLabel: "Fixed dwell time",
+    fixedParameterValue: "15 µs",
   };
 }
 
-function unstableSinusoidal(voltage: number, cycleTime: number, status: string): Prediction {
+export function getSinusoidalDwellPrediction(cycleTime: number): Prediction {
+  const voltage = 33;
+
+  if (cycleTime < 15) {
+    return unstableSinusoidalDwell(cycleTime, "Too short / unstable");
+  }
+
+  if (cycleTime > 21) {
+    return unstableSinusoidalDwell(cycleTime, "Multiple droplets");
+  }
+
+  const diameter = interpolateSeries(sinusoidalCycleData, "cycleTime", "diameter", cycleTime);
+  const speed = interpolateSeries(sinusoidalCycleData, "cycleTime", "speed", cycleTime);
+  const status = cycleTime === 15 ? "Stable - optimized sinusoidal condition" : "Stable dwell-time sweep condition";
+
+  return {
+    waveform: "Sinusoidal",
+    voltage,
+    cycleTime,
+    diameter: rounded(diameter),
+    speed: rounded(speed),
+    ratio: rounded(calculateDropletNozzleRatio(diameter)),
+    status,
+    statusTone: "stable",
+    fixedParameterLabel: "Fixed driving voltage",
+    fixedParameterValue: "33 V",
+  };
+}
+
+function unstableSinusoidalVoltage(voltage: number, status: string): Prediction {
+  const cycleTime = 15;
   const fallbackDiameter = interpolateSeries(sinusoidalVoltageData, "voltage", "diameter", clamp(voltage, 33, 45));
   const fallbackSpeed = interpolateSeries(sinusoidalVoltageData, "voltage", "speed", clamp(voltage, 33, 45));
 
@@ -113,6 +130,29 @@ function unstableSinusoidal(voltage: number, cycleTime: number, status: string):
     status,
     statusTone: getStabilityStatus(status),
     note: "Output is shown at the nearest calibrated stable voltage for scale; jetting state is not stable.",
+    fixedParameterLabel: "Fixed dwell time",
+    fixedParameterValue: "15 µs",
+  };
+}
+
+function unstableSinusoidalDwell(cycleTime: number, status: string): Prediction {
+  const voltage = 33;
+  const fallbackCycleTime = clamp(cycleTime, 15, 21);
+  const fallbackDiameter = interpolateSeries(sinusoidalCycleData, "cycleTime", "diameter", fallbackCycleTime);
+  const fallbackSpeed = interpolateSeries(sinusoidalCycleData, "cycleTime", "speed", fallbackCycleTime);
+
+  return {
+    waveform: "Sinusoidal",
+    voltage,
+    cycleTime,
+    diameter: rounded(fallbackDiameter),
+    speed: rounded(fallbackSpeed),
+    ratio: rounded(calculateDropletNozzleRatio(fallbackDiameter)),
+    status,
+    statusTone: getStabilityStatus(status),
+    note: "Output is shown at the nearest calibrated stable dwell time for scale; jetting state is not stable.",
+    fixedParameterLabel: "Fixed driving voltage",
+    fixedParameterValue: "33 V",
   };
 }
 

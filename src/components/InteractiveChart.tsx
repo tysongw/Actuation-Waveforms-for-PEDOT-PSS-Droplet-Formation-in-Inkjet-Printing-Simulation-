@@ -9,8 +9,11 @@ import {
   YAxis,
 } from "recharts";
 import {
+  ExperimentMode,
   Prediction,
   WaveformType,
+  sinusoidalCycleData,
+  sinusoidalCycleEndpoints,
   sinusoidalVoltageData,
   sinusoidalVoltageEndpoints,
   unipolarBaselineData,
@@ -19,6 +22,7 @@ import { interpolateSeries } from "../utils/interpolation";
 
 interface InteractiveChartProps {
   waveform: WaveformType;
+  experimentMode: ExperimentMode;
   prediction: Prediction;
 }
 
@@ -38,27 +42,41 @@ interface EndpointPoint {
   status: string;
 }
 
-export default function InteractiveChart({ waveform, prediction }: InteractiveChartProps) {
-  const chart = buildVoltageChart(waveform, prediction);
+interface ChartConfig {
+  caption: string;
+  diameterTitle: string;
+  speedTitle: string;
+  xLabel: string;
+  xUnit: string;
+  currentX: number;
+  xDomain: [number, number];
+  diameterDomain: [number, number];
+  speedDomain: [number, number];
+  data: ChartPoint[];
+  unstableData: EndpointPoint[];
+}
+
+export default function InteractiveChart({ experimentMode, waveform, prediction }: InteractiveChartProps) {
+  const chart = buildChart(waveform, experimentMode, prediction);
 
   return (
-    <section className="chart-stack" aria-label="Voltage sweep charts">
+    <section className="chart-stack" aria-label="Experimental sweep charts">
       <SingleMetricChart
         chart={chart}
         color="#1d64c8"
         metric="diameter"
         prediction={prediction}
-        title={waveform === "Sinusoidal" ? "Droplet diameter vs voltage" : "Baseline diameter vs voltage"}
-        unit="µm"
+        title={chart.diameterTitle}
+        unit={"\u00b5m"}
         yDomain={chart.diameterDomain}
-        yLabel="Diameter (µm)"
+        yLabel={"Diameter (\u00b5m)"}
       />
       <SingleMetricChart
         chart={chart}
         color="#c83d3d"
         metric="speed"
         prediction={prediction}
-        title={waveform === "Sinusoidal" ? "Ejection speed vs voltage" : "Baseline speed vs voltage"}
+        title={chart.speedTitle}
         unit="m/s"
         yDomain={chart.speedDomain}
         yLabel="Speed (m/s)"
@@ -77,7 +95,7 @@ function SingleMetricChart({
   yDomain,
   yLabel,
 }: {
-  chart: ReturnType<typeof buildVoltageChart>;
+  chart: ChartConfig;
   color: string;
   metric: MetricKey;
   prediction: Prediction;
@@ -173,16 +191,42 @@ function SingleMetricChart({
   );
 }
 
-function buildVoltageChart(waveform: WaveformType, prediction: Prediction) {
+function buildChart(waveform: WaveformType, experimentMode: ExperimentMode, prediction: Prediction): ChartConfig {
+  if (waveform === "Sinusoidal" && experimentMode === "dwell") {
+    return {
+      caption: "Driving voltage is fixed at 33 V; only dwell time is varied.",
+      diameterTitle: "Droplet diameter vs dwell time",
+      speedTitle: "Flying speed vs dwell time",
+      xLabel: "Dwell time",
+      xUnit: " \u00b5s",
+      currentX: prediction.cycleTime,
+      xDomain: [12, 24],
+      diameterDomain: [28, 56],
+      speedDomain: [0, 7],
+      data: sinusoidalCycleData.map((point) => ({ x: point.cycleTime, ...point })),
+      unstableData: sinusoidalCycleEndpoints.map((point) => {
+        const cycleTime = point.cycleTime < 15 ? 15 : 21;
+        return {
+          x: point.cycleTime,
+          diameter: interpolateSeries(sinusoidalCycleData, "cycleTime", "diameter", cycleTime),
+          speed: interpolateSeries(sinusoidalCycleData, "cycleTime", "speed", cycleTime),
+          status: point.status,
+        };
+      }),
+    };
+  }
+
   if (waveform === "Sinusoidal") {
     return {
-      caption: "Fixed at 15 \u00b5s; open markers indicate unstable voltage endpoints.",
+      caption: "Dwell time is fixed at 15 \u00b5s; only driving voltage is varied.",
+      diameterTitle: "Droplet diameter vs voltage",
+      speedTitle: "Flying speed vs voltage",
       xLabel: "Driving voltage",
       xUnit: " V",
       currentX: prediction.voltage,
-      xDomain: [30, 48] as [number, number],
-      diameterDomain: [28, 56] as [number, number],
-      speedDomain: [0, 7] as [number, number],
+      xDomain: [30, 48],
+      diameterDomain: [28, 56],
+      speedDomain: [0, 7],
       data: sinusoidalVoltageData.map((point) => ({ x: point.voltage, ...point })),
       unstableData: sinusoidalVoltageEndpoints.map((point) => {
         const voltage = point.voltage < 33 ? 33 : 45;
@@ -198,17 +242,19 @@ function buildVoltageChart(waveform: WaveformType, prediction: Prediction) {
 
   return {
     caption: "Unipolar is shown as an approximate baseline reference.",
+    diameterTitle: "Baseline diameter vs voltage",
+    speedTitle: "Baseline speed vs voltage",
     xLabel: "Drive voltage",
     xUnit: " V",
     currentX: prediction.voltage,
-    xDomain: [25, 45] as [number, number],
-    diameterDomain: [48, 72] as [number, number],
-    speedDomain: [0, 4] as [number, number],
+    xDomain: [25, 45],
+    diameterDomain: [48, 72],
+    speedDomain: [0, 4],
     data: [
       { x: 25, diameter: 56, speed: 1.85, status: "approximate baseline" },
       { x: 35, diameter: unipolarBaselineData[0].diameter, speed: unipolarBaselineData[0].speed, status: "stable baseline" },
       { x: 45, diameter: 64, speed: 2.55, status: "approximate baseline" },
     ],
-    unstableData: [] as EndpointPoint[],
+    unstableData: [],
   };
 }

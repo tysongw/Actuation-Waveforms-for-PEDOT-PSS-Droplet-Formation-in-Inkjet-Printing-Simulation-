@@ -5,19 +5,21 @@ interface ResultCardsProps {
 }
 
 export default function ResultCards({ prediction }: ResultCardsProps) {
+  const isSinusoidalVoltageSweep = prediction.fixedParameterLabel === "Fixed dwell time";
+  const isSinusoidalDwellSweep = prediction.fixedParameterLabel === "Fixed driving voltage";
+
   return (
     <section className="result-section" aria-label="Prediction results">
       <MetricCard label="Waveform" value={prediction.waveform} />
-      <MetricCard label="Voltage" value={`${prediction.voltage} V`} />
-      <MetricCard
-        label={prediction.waveform === "Unipolar" ? "Dwell Time" : "Cycle Time"}
-        value={`${prediction.cycleTime} \u00b5s`}
-      />
-      <MetricCard label="In-flight Diameter" value={`${prediction.diameter.toFixed(2)} \u00b5m`} tone="blue" />
-      <MetricCard label="Ejection Speed" value={prediction.speed === null ? "n/a" : `${prediction.speed.toFixed(2)} m/s`} tone="red" />
-      {prediction.printedDiameter !== undefined && (
-        <MetricCard label="Printed Dot Diameter" value={`${prediction.printedDiameter.toFixed(1)} \u00b5m`} />
+      {!isSinusoidalDwellSweep && <MetricCard label="Driving Voltage" value={`${prediction.voltage} V`} />}
+      {!isSinusoidalVoltageSweep && (
+        <MetricCard label="Dwell Time" value={`${prediction.cycleTime} \u00b5s`} />
       )}
+      {prediction.fixedParameterLabel && prediction.fixedParameterValue && (
+        <MetricCard label={prediction.fixedParameterLabel} value={prediction.fixedParameterValue} />
+      )}
+      <MetricCard label="In-flight Diameter" value={`${prediction.diameter.toFixed(2)} \u00b5m`} tone="blue" />
+      <MetricCard label="Flying Speed" value={prediction.speed === null ? "n/a" : `${prediction.speed.toFixed(2)} m/s`} tone="red" />
       <MetricCard label="Droplet / Nozzle" value={`${prediction.ratio.toFixed(2)}x`} />
       <article className="metric-card stability-card">
         <span className="metric-label">Jetting Stability</span>

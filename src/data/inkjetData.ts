@@ -1,4 +1,5 @@
 export type WaveformType = "Unipolar" | "Sinusoidal";
+export type ExperimentMode = "voltage" | "dwell";
 
 export type StabilityTone = "stable" | "warning" | "unstable" | "baseline";
 
@@ -8,26 +9,27 @@ export interface Prediction {
   cycleTime: number;
   diameter: number;
   speed: number | null;
-  printedDiameter?: number;
   ratio: number;
   status: string;
   statusTone: StabilityTone;
   note?: string;
+  fixedParameterLabel?: string;
+  fixedParameterValue?: string;
 }
 
 export const nozzleDiameter = 30;
 
 export const sinusoidalVoltageData = [
-  { voltage: 33, diameter: 33.35, speed: 1.56, printedDiameter: 53.6, status: "stable" },
-  { voltage: 36, diameter: 34.91, speed: 2.9, printedDiameter: 62.7, status: "stable" },
-  { voltage: 39, diameter: 37.0, speed: 3.92, printedDiameter: 70.7, status: "stable" },
-  { voltage: 42, diameter: 38.89, speed: 5.01, printedDiameter: 74.4, status: "stable" },
-  { voltage: 45, diameter: 48.26, speed: 6.14, printedDiameter: 79.4, status: "stable" },
+  { voltage: 33, diameter: 33.35, speed: 1.56, status: "stable" },
+  { voltage: 36, diameter: 34.91, speed: 2.9, status: "stable" },
+  { voltage: 39, diameter: 37.0, speed: 3.92, status: "stable" },
+  { voltage: 42, diameter: 38.89, speed: 5.01, status: "stable" },
+  { voltage: 45, diameter: 48.26, speed: 6.14, status: "stable" },
 ];
 
 export const sinusoidalVoltageEndpoints = [
-  { voltage: 30, diameter: null, speed: null, printedDiameter: null, status: "under-actuated / unstable" },
-  { voltage: 48, diameter: null, speed: null, printedDiameter: null, status: "over-actuated / satellite droplets" },
+  { voltage: 30, diameter: null, speed: null, status: "under-actuated / unstable" },
+  { voltage: 48, diameter: null, speed: null, status: "over-actuated / satellite droplets" },
 ];
 
 export const sinusoidalCycleData = [

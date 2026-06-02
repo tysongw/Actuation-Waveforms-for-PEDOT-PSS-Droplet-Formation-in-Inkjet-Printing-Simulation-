@@ -1,15 +1,21 @@
-import { WaveformType } from "../data/inkjetData";
+import { ExperimentMode, WaveformType } from "../data/inkjetData";
 
 interface ControlPanelProps {
   waveform: WaveformType;
+  experimentMode: ExperimentMode;
   voltage: number;
   cycleTime: number;
   onWaveformChange: (waveform: WaveformType) => void;
+  onExperimentModeChange: (mode: ExperimentMode) => void;
   onVoltageChange: (voltage: number) => void;
   onCycleTimeChange: (cycleTime: number) => void;
 }
 
 const waveformOptions: WaveformType[] = ["Unipolar", "Sinusoidal"];
+const experimentModes: Array<{ value: ExperimentMode; label: string }> = [
+  { value: "voltage", label: "Voltage sweep" },
+  { value: "dwell", label: "Dwell time sweep" },
+];
 
 const voltageConfig = {
   Unipolar: { min: 25, max: 45, step: 1, label: "Drive Voltage", unit: "V" },
@@ -18,14 +24,16 @@ const voltageConfig = {
 
 const cycleConfig = {
   Unipolar: { min: 3, max: 30, step: 1, label: "Dwell Time", unit: "us" },
-  Sinusoidal: { min: 12, max: 24, step: 1, label: "Cycle Time", unit: "us" },
+  Sinusoidal: { min: 12, max: 24, step: 1, label: "Dwell Time", unit: "us" },
 };
 
 export default function ControlPanel({
   waveform,
+  experimentMode,
   voltage,
   cycleTime,
   onWaveformChange,
+  onExperimentModeChange,
   onVoltageChange,
   onCycleTimeChange,
 }: ControlPanelProps) {
@@ -55,25 +63,55 @@ export default function ControlPanel({
         </div>
       </fieldset>
 
-      <SliderControl
-        label={voltageRange.label}
-        max={voltageRange.max}
-        min={voltageRange.min}
-        onChange={onVoltageChange}
-        step={voltageRange.step}
-        unit={voltageRange.unit}
-        value={voltage}
-      />
+      {waveform === "Sinusoidal" && (
+        <fieldset className="control-group">
+          <legend>Experiment Mode</legend>
+          <div className="segmented-control">
+            {experimentModes.map((mode) => (
+              <button
+                className={mode.value === experimentMode ? "active" : ""}
+                key={mode.value}
+                onClick={() => onExperimentModeChange(mode.value)}
+                type="button"
+              >
+                {mode.label}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
-      <SliderControl
-        label={cycleRange.label}
-        max={cycleRange.max}
-        min={cycleRange.min}
-        onChange={onCycleTimeChange}
-        step={cycleRange.step}
-        unit={cycleRange.unit}
-        value={cycleTime}
-      />
+      {(waveform === "Unipolar" || experimentMode === "voltage") && (
+        <SliderControl
+          label={voltageRange.label}
+          max={voltageRange.max}
+          min={voltageRange.min}
+          onChange={onVoltageChange}
+          step={voltageRange.step}
+          unit={voltageRange.unit}
+          value={voltage}
+        />
+      )}
+
+      {waveform === "Sinusoidal" && experimentMode === "voltage" && (
+        <FixedParameter label="Fixed Dwell Time" value={"15 \u00b5s"} />
+      )}
+
+      {(waveform === "Unipolar" || experimentMode === "dwell") && (
+        <SliderControl
+          label={cycleRange.label}
+          max={cycleRange.max}
+          min={cycleRange.min}
+          onChange={onCycleTimeChange}
+          step={cycleRange.step}
+          unit={cycleRange.unit}
+          value={cycleTime}
+        />
+      )}
+
+      {waveform === "Sinusoidal" && experimentMode === "dwell" && (
+        <FixedParameter label="Fixed Driving Voltage" value="33 V" />
+      )}
 
       <div className="context-note">
         {waveform === "Unipolar" && (
@@ -82,10 +120,22 @@ export default function ControlPanel({
           </p>
         )}
         {waveform === "Sinusoidal" && (
-          <p>33 V at 15 &micro;s is marked as the optimized sinusoidal condition.</p>
+          <p>
+            Voltage and dwell-time sweeps are treated as separate one-variable experiments. 33 V at 15 &micro;s is the
+            optimized sinusoidal reference.
+          </p>
         )}
       </div>
     </aside>
+  );
+}
+
+function FixedParameter({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="fixed-parameter" aria-label={`${label}: ${value}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
   );
 }
 

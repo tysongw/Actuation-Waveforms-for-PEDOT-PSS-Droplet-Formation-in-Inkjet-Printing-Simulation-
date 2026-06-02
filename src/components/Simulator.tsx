@@ -3,24 +3,36 @@ import ControlPanel from "./ControlPanel";
 import InteractiveChart from "./InteractiveChart";
 import ResultCards from "./ResultCards";
 import WaveformSVG from "./WaveformSVG";
-import { WaveformType, waveformDefaults } from "../data/inkjetData";
-import { getSinusoidalPrediction, getUnipolarPrediction } from "../utils/interpolation";
+import { ExperimentMode, WaveformType, waveformDefaults } from "../data/inkjetData";
+import { getSinusoidalDwellPrediction, getSinusoidalVoltagePrediction, getUnipolarPrediction } from "../utils/interpolation";
 
 export default function Simulator() {
   const [waveform, setWaveform] = useState<WaveformType>("Sinusoidal");
+  const [experimentMode, setExperimentMode] = useState<ExperimentMode>("voltage");
   const [voltage, setVoltage] = useState(waveformDefaults.Sinusoidal.voltage);
   const [cycleTime, setCycleTime] = useState(waveformDefaults.Sinusoidal.cycleTime);
 
   const prediction = useMemo(() => {
     if (waveform === "Unipolar") return getUnipolarPrediction(voltage, cycleTime);
-    return getSinusoidalPrediction(voltage, cycleTime);
-  }, [waveform, voltage, cycleTime]);
+    if (experimentMode === "dwell") return getSinusoidalDwellPrediction(cycleTime);
+    return getSinusoidalVoltagePrediction(voltage);
+  }, [experimentMode, waveform, voltage, cycleTime]);
 
   function handleWaveformChange(nextWaveform: WaveformType) {
     const defaults = waveformDefaults[nextWaveform];
     setWaveform(nextWaveform);
+    setExperimentMode("voltage");
     setVoltage(defaults.voltage);
     setCycleTime(defaults.cycleTime);
+  }
+
+  function handleExperimentModeChange(nextMode: ExperimentMode) {
+    setExperimentMode(nextMode);
+    if (nextMode === "voltage") {
+      setCycleTime(15);
+    } else {
+      setVoltage(33);
+    }
   }
 
   return (
@@ -30,7 +42,7 @@ export default function Simulator() {
           <p className="eyebrow">PEDOT:PSS inkjet printing model</p>
           <h1>Interactive Inkjet Droplet Waveform Simulator</h1>
           <p className="subtitle">
-            Explore how actuation waveform, voltage, and cycle time affect PEDOT:PSS droplet formation.
+            Explore one-variable voltage and dwell-time sweeps for PEDOT:PSS droplet formation.
           </p>
         </div>
         <p className="scientific-note">
@@ -42,9 +54,11 @@ export default function Simulator() {
       <section className="simulator-grid">
         <ControlPanel
           waveform={waveform}
+          experimentMode={experimentMode}
           voltage={voltage}
           cycleTime={cycleTime}
           onWaveformChange={handleWaveformChange}
+          onExperimentModeChange={handleExperimentModeChange}
           onVoltageChange={setVoltage}
           onCycleTimeChange={setCycleTime}
         />
@@ -52,7 +66,7 @@ export default function Simulator() {
         <section className="output-column" aria-label="Simulator output">
           <WaveformSVG waveform={waveform} voltage={voltage} cycleTime={cycleTime} />
           <ResultCards prediction={prediction} />
-          <InteractiveChart waveform={waveform} prediction={prediction} />
+          <InteractiveChart experimentMode={experimentMode} waveform={waveform} prediction={prediction} />
         </section>
       </section>
     </main>
