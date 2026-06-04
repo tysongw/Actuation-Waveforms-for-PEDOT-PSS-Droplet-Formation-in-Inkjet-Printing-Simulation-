@@ -39,15 +39,15 @@ export default function Simulator() {
     <main className="page-shell">
       <header className="page-header">
         <div>
-          <p className="eyebrow">PEDOT:PSS inkjet printing model</p>
+          <p className="eyebrow">Empirical PEDOT:PSS inkjet model</p>
           <h1>Interactive Inkjet Droplet Waveform Simulator</h1>
           <p className="subtitle">
-            Explore one-variable voltage and dwell-time sweeps for PEDOT:PSS droplet formation.
+            Compare voltage and dwell-time sweeps derived from reported droplet formation experiments.
           </p>
         </div>
         <p className="scientific-note">
-          This simulator uses experimental data and piecewise linear interpolation from the reported figures. It is
-          intended for interactive visualization and design intuition, not full CFD prediction.
+          Predictions use figure-level experimental data with piecewise linear interpolation. Values should be read as
+          empirical operating guidance, not a full fluid-dynamics model.
         </p>
       </header>
 
