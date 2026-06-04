@@ -43,11 +43,50 @@ export const sinusoidalCycleEndpoints = [
   { cycleTime: 24, diameter: null, speed: null, status: "multiple droplets" },
 ];
 
-export const unipolarBaselineData = [
-  { waveform: "Unipolar", diameter: 60.0, speed: 2.2, status: "stable baseline" },
+export const unipolarFigure3Data = [
+  { voltage: 20, dwellTime: 13, volume: 49, speed: 0.75, status: "stable" },
+  { voltage: 20, dwellTime: 16, volume: 58, speed: 1.38, status: "stable" },
+  { voltage: 20, dwellTime: 19, volume: 63, speed: 1.55, status: "stable" },
+  { voltage: 20, dwellTime: 22, volume: 60, speed: 1.25, status: "stable" },
+  { voltage: 20, dwellTime: 25, volume: 51, speed: 1.22, status: "stable" },
+  { voltage: 20, dwellTime: 28, volume: 52, speed: 0.95, status: "stable" },
+  { voltage: 20, dwellTime: 31, volume: 46, speed: 0.42, status: "stable" },
+  { voltage: 25, dwellTime: 10, volume: 69, speed: 1.72, status: "stable" },
+  { voltage: 25, dwellTime: 13, volume: 71, speed: 2.78, status: "stable" },
+  { voltage: 25, dwellTime: 16, volume: 74, speed: 3.45, status: "stable" },
+  { voltage: 25, dwellTime: 19, volume: 78, speed: 3.72, status: "stable" },
+  { voltage: 25, dwellTime: 22, volume: 79, speed: 3.67, status: "stable" },
+  { voltage: 25, dwellTime: 25, volume: 72, speed: 3.45, status: "stable" },
+  { voltage: 30, dwellTime: 7, volume: 61, speed: 2.18, status: "stable" },
+  { voltage: 30, dwellTime: 10, volume: 86, speed: 3.48, status: "stable" },
+  { voltage: 30, dwellTime: 13, volume: 92, speed: 4.22, status: "stable" },
+  { voltage: 35, dwellTime: 4, volume: 62, speed: 1.85, status: "stable" },
+  { voltage: 35, dwellTime: 7, volume: 74, speed: 3.6, status: "stable" },
+  { voltage: 35, dwellTime: 10, volume: 96, speed: 4.95, status: "stable" },
+  { voltage: 40, dwellTime: 4, volume: 76, speed: 3.15, status: "stable" },
+  { voltage: 40, dwellTime: 7, volume: 95, speed: 4.95, status: "stable" },
+  { voltage: 45, dwellTime: 4, volume: 76, speed: 4.35, status: "stable" },
+  { voltage: 50, dwellTime: 4, volume: 85, speed: 5.35, status: "stable" },
+];
+
+export const unipolarFigure3Endpoints = [
+  { voltage: 20, dwellTime: 10, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 20, dwellTime: 34, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 25, dwellTime: 7, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 25, dwellTime: 28, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 30, dwellTime: 4, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 30, dwellTime: 16, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 35, dwellTime: 1, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 35, dwellTime: 13, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 40, dwellTime: 1, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 40, dwellTime: 10, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 45, dwellTime: 1, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 45, dwellTime: 7, outcome: "satellite", status: "Satellite droplets" },
+  { voltage: 50, dwellTime: 1, outcome: "no-droplet", status: "No droplet ejection" },
+  { voltage: 50, dwellTime: 7, outcome: "satellite", status: "Satellite droplets" },
 ] as const;
 
 export const waveformDefaults: Record<WaveformType, { voltage: number; cycleTime: number }> = {
-  Unipolar: { voltage: 35, cycleTime: 12 },
+  Unipolar: { voltage: 25, cycleTime: 10 },
   Sinusoidal: { voltage: 33, cycleTime: 15 },
 };

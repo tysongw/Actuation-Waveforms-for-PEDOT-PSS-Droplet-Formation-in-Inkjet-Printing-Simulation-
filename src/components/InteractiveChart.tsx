@@ -16,9 +16,8 @@ import {
   sinusoidalCycleEndpoints,
   sinusoidalVoltageData,
   sinusoidalVoltageEndpoints,
-  unipolarBaselineData,
 } from "../data/inkjetData";
-import { interpolateSeries } from "../utils/interpolation";
+import { getUnipolarEndpointData, getUnipolarSweepData, interpolateSeries } from "../utils/interpolation";
 
 interface InteractiveChartProps {
   waveform: WaveformType;
@@ -241,20 +240,16 @@ function buildChart(waveform: WaveformType, experimentMode: ExperimentMode, pred
   }
 
   return {
-    caption: "Unipolar is shown as an approximate baseline reference.",
-    diameterTitle: "Baseline diameter vs voltage",
-    speedTitle: "Baseline speed vs voltage",
-    xLabel: "Drive voltage",
-    xUnit: " V",
-    currentX: prediction.voltage,
-    xDomain: [25, 45],
-    diameterDomain: [48, 72],
-    speedDomain: [0, 4],
-    data: [
-      { x: 25, diameter: 56, speed: 1.85, status: "approximate baseline" },
-      { x: 35, diameter: unipolarBaselineData[0].diameter, speed: unipolarBaselineData[0].speed, status: "stable baseline" },
-      { x: 45, diameter: 64, speed: 2.55, status: "approximate baseline" },
-    ],
-    unstableData: [],
+    caption: "Drive voltage is selected with the slider; dwell time is swept from Figure 3 data.",
+    diameterTitle: "Droplet diameter vs dwell time",
+    speedTitle: "Flying speed vs dwell time",
+    xLabel: "Dwell time",
+    xUnit: " \u00b5s",
+    currentX: prediction.cycleTime,
+    xDomain: [0, 35],
+    diameterDomain: [30, 70],
+    speedDomain: [0, 8],
+    data: getUnipolarSweepData(prediction.voltage).map((point) => ({ x: point.dwellTime, ...point })),
+    unstableData: getUnipolarEndpointData(prediction.voltage).map((point) => ({ x: point.dwellTime, ...point })),
   };
 }

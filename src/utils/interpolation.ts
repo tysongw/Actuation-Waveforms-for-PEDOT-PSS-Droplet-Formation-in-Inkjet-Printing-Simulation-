@@ -3,7 +3,8 @@ import {
   nozzleDiameter,
   sinusoidalCycleData,
   sinusoidalVoltageData,
-  unipolarBaselineData,
+  unipolarFigure3Data,
+  unipolarFigure3Endpoints,
 } from "../data/inkjetData";
 
 type NumericRecord = Record<string, number | string | null>;
@@ -47,6 +48,11 @@ function clamp(value: number, min: number, max: number) {
 
 function rounded(value: number, digits = 2) {
   return Number(value.toFixed(digits));
+}
+
+function volumePlToDiameterUm(volume: number) {
+  const volumeUm3 = volume * 1000;
+  return 2 * Math.cbrt((3 * volumeUm3) / (4 * Math.PI));
 }
 
 export function getStabilityStatus(status: string): Prediction["statusTone"] {
@@ -157,21 +163,128 @@ function unstableSinusoidalDwell(cycleTime: number, status: string): Prediction 
 }
 
 export function getUnipolarPrediction(voltage: number, dwellTime: number): Prediction {
-  const baseline = unipolarBaselineData[0];
-  const voltageEffect = (voltage - 35) * 0.35;
-  const dwellEffect = (dwellTime - 12) * 0.25;
-  const diameter = clamp(baseline.diameter + voltageEffect + dwellEffect, 52, 68);
-  const speed = clamp(baseline.speed + (voltage - 35) * 0.035, 1.5, 3.1);
+  const envelope = getUnipolarStableEnvelope(voltage);
+  const calibratedDwellTime = clamp(dwellTime, envelope.minDwellTime, envelope.maxDwellTime);
+  const point = interpolateUnipolarPoint(voltage, calibratedDwellTime);
+  const diameter = volumePlToDiameterUm(point.volume);
+  const isBelowStableRange = dwellTime < envelope.minDwellTime;
+  const isAboveStableRange = dwellTime > envelope.maxDwellTime;
+  const status = isBelowStableRange
+    ? "No droplet ejection"
+    : isAboveStableRange
+      ? "Satellite droplets"
+      : voltage === 25 && dwellTime === 10
+        ? "Stable - reported unipolar operating point"
+        : "Stable Figure 3 condition";
 
   return {
     waveform: "Unipolar",
     voltage,
     cycleTime: dwellTime,
     diameter: rounded(diameter),
-    speed: rounded(speed),
+    speed: rounded(point.speed),
     ratio: rounded(calculateDropletNozzleRatio(diameter)),
-    status: "Approximate baseline",
-    statusTone: "baseline",
-    note: "Unipolar waveform is used as a baseline. The reported optimized droplet size is around 60 \u00b5m.",
+    status,
+    statusTone: isBelowStableRange ? "unstable" : isAboveStableRange ? "warning" : "stable",
+    note:
+      isBelowStableRange || isAboveStableRange
+        ? "Output is shown at the nearest calibrated stable dwell time for scale; jetting state follows the Figure 3 marker."
+        : "Unipolar prediction is interpolated from Figure 3 volume and flying-speed data.",
   };
+}
+
+export function getUnipolarStableEnvelope(voltage: number) {
+  const summaries = getUnipolarVoltageSummaries();
+
+  return {
+    minDwellTime: interpolateSeries(summaries, "voltage", "minDwellTime", voltage),
+    maxDwellTime: interpolateSeries(summaries, "voltage", "maxDwellTime", voltage),
+  };
+}
+
+export function getUnipolarSweepData(voltage: number) {
+  const envelope = getUnipolarStableEnvelope(voltage);
+  const sampleCount = Math.max(2, Math.round(envelope.maxDwellTime - envelope.minDwellTime) + 1);
+
+  return Array.from({ length: sampleCount }, (_, index) => {
+    const dwellTime =
+      envelope.minDwellTime + ((envelope.maxDwellTime - envelope.minDwellTime) * index) / (sampleCount - 1);
+    const point = interpolateUnipolarPoint(voltage, dwellTime);
+    const diameter = volumePlToDiameterUm(point.volume);
+
+    return {
+      dwellTime: rounded(dwellTime),
+      diameter: rounded(diameter),
+      speed: rounded(point.speed),
+      status: "stable Figure 3 interpolation",
+    };
+  });
+}
+
+export function getUnipolarEndpointData(voltage: number) {
+  const endpoints = getUnipolarEndpointSummaries();
+
+  return ["no-droplet", "satellite"].map((outcome) => {
+    const matchingEndpoints = endpoints.filter((point) => point.outcome === outcome);
+    const dwellTime = interpolateSeries(matchingEndpoints, "voltage", "dwellTime", voltage);
+    const envelope = getUnipolarStableEnvelope(voltage);
+    const point = interpolateUnipolarPoint(voltage, clamp(dwellTime, envelope.minDwellTime, envelope.maxDwellTime));
+    const diameter = volumePlToDiameterUm(point.volume);
+
+    return {
+      dwellTime: rounded(dwellTime),
+      diameter: rounded(diameter),
+      speed: rounded(point.speed),
+      status: outcome === "no-droplet" ? "No droplet ejection" : "Satellite droplets",
+    };
+  });
+}
+
+function interpolateUnipolarPoint(voltage: number, dwellTime: number) {
+  const voltages = [...new Set(unipolarFigure3Data.map((point) => point.voltage))].sort((a, b) => a - b);
+  const lowerVoltage = voltages.filter((candidate) => candidate <= voltage).at(-1) ?? voltages[0];
+  const upperVoltage = voltages.find((candidate) => candidate >= voltage) ?? voltages[voltages.length - 1];
+  const lowerPoint = interpolateUnipolarSeriesAtVoltage(lowerVoltage, dwellTime);
+  const upperPoint = interpolateUnipolarSeriesAtVoltage(upperVoltage, dwellTime);
+
+  if (lowerVoltage === upperVoltage) return lowerPoint;
+
+  return {
+    volume: linearInterpolate(voltage, lowerVoltage, lowerPoint.volume, upperVoltage, upperPoint.volume),
+    speed: linearInterpolate(voltage, lowerVoltage, lowerPoint.speed, upperVoltage, upperPoint.speed),
+  };
+}
+
+function interpolateUnipolarSeriesAtVoltage(voltage: number, dwellTime: number) {
+  const series = unipolarFigure3Data.filter((point) => point.voltage === voltage);
+  const clampedDwellTime = clamp(
+    dwellTime,
+    Math.min(...series.map((point) => point.dwellTime)),
+    Math.max(...series.map((point) => point.dwellTime)),
+  );
+
+  return {
+    volume: interpolateSeries(series, "dwellTime", "volume", clampedDwellTime),
+    speed: interpolateSeries(series, "dwellTime", "speed", clampedDwellTime),
+  };
+}
+
+function getUnipolarVoltageSummaries() {
+  return [...new Set(unipolarFigure3Data.map((point) => point.voltage))].map((voltage) => {
+    const series = unipolarFigure3Data.filter((point) => point.voltage === voltage);
+
+    return {
+      voltage,
+      minDwellTime: Math.min(...series.map((point) => point.dwellTime)),
+      maxDwellTime: Math.max(...series.map((point) => point.dwellTime)),
+    };
+  });
+}
+
+function getUnipolarEndpointSummaries() {
+  return unipolarFigure3Endpoints.map((point) => ({
+    voltage: point.voltage,
+    dwellTime: point.dwellTime,
+    outcome: point.outcome,
+  }));
 }

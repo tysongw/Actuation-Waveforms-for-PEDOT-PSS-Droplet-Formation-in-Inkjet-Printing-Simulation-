@@ -18,12 +18,12 @@ const experimentModes: Array<{ value: ExperimentMode; label: string }> = [
 ];
 
 const voltageConfig = {
-  Unipolar: { min: 25, max: 45, step: 1, label: "Drive Voltage", unit: "V" },
+  Unipolar: { min: 20, max: 50, step: 1, label: "Drive Voltage", unit: "V" },
   Sinusoidal: { min: 30, max: 48, step: 1, label: "Driving Voltage", unit: "V" },
 };
 
 const cycleConfig = {
-  Unipolar: { min: 3, max: 30, step: 1, label: "Dwell Time", unit: "us" },
+  Unipolar: { min: 1, max: 34, step: 1, label: "Dwell Time", unit: "us" },
   Sinusoidal: { min: 12, max: 24, step: 1, label: "Dwell Time", unit: "us" },
 };
 
@@ -116,7 +116,7 @@ export default function ControlPanel({
       <div className="context-note">
         {waveform === "Unipolar" && (
           <p>
-            Unipolar waveform is used as a baseline. The reported optimized droplet size is around 60 &micro;m.
+            Unipolar interpolation uses Figure 3 volume and flying-speed sweeps across 20-50 V and dwell time.
           </p>
         )}
         {waveform === "Sinusoidal" && (
