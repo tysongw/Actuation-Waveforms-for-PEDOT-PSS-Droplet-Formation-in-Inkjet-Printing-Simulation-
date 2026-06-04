@@ -10,7 +10,6 @@ export default function ResultCards({ prediction }: ResultCardsProps) {
 
   return (
     <section className="result-section" aria-label="Prediction results">
-      <MetricCard label="Waveform" value={prediction.waveform} />
       {!isSinusoidalDwellSweep && <MetricCard label="Driving Voltage" value={`${prediction.voltage} V`} />}
       {!isSinusoidalVoltageSweep && (
         <MetricCard label="Dwell Time" value={`${prediction.cycleTime} \u00b5s`} />
@@ -20,7 +19,6 @@ export default function ResultCards({ prediction }: ResultCardsProps) {
       )}
       <MetricCard label="In-flight Diameter" value={`${prediction.diameter.toFixed(2)} \u00b5m`} tone="blue" />
       <MetricCard label="Flying Speed" value={prediction.speed === null ? "n/a" : `${prediction.speed.toFixed(2)} m/s`} tone="red" />
-      <MetricCard label="Droplet / Nozzle" value={`${prediction.ratio.toFixed(2)}x`} />
       <article className="metric-card stability-card">
         <span className="metric-label">Jetting Stability</span>
         <span className={`status-badge ${prediction.statusTone}`}>{prediction.status}</span>
