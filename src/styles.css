@@ -492,9 +492,64 @@ h2 {
   font-style: normal;
 }
 
+.source-section {
+  display: grid;
+  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #d5dee8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+}
+
+.source-section h2 {
+  margin-bottom: 6px;
+}
+
+.source-section p {
+  margin-bottom: 0;
+  color: #556575;
+  font-size: 0.88rem;
+}
+
+.source-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.source-list li {
+  display: grid;
+  gap: 5px;
+  padding: 0 0 12px 14px;
+  border-bottom: 1px solid #e5ebf1;
+  border-left: 3px solid #b7c9dc;
+}
+
+.source-list li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.source-list strong {
+  color: #111827;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.source-list span {
+  color: #526173;
+  font-size: 0.86rem;
+}
+
 @media (max-width: 1040px) {
   .page-header,
-  .simulator-grid {
+  .simulator-grid,
+  .source-section {
     grid-template-columns: 1fr;
   }
 

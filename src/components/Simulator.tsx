@@ -69,6 +69,38 @@ export default function Simulator() {
           <InteractiveChart experimentMode={experimentMode} waveform={waveform} prediction={prediction} />
         </section>
       </section>
+
+      <section className="source-section" aria-labelledby="data-sources-heading">
+        <div>
+          <p className="eyebrow">Model provenance</p>
+          <h2 id="data-sources-heading">Data sources</h2>
+          <p>
+            Simulation curves and operating windows are digitized or interpolated from the reported experimental
+            datasets below.
+          </p>
+        </div>
+        <ol className="source-list">
+          <li>
+            <strong>
+              Investigation of waveform parameters in inkjet printing of PEDOT:PSS ink for flexible electronics
+              fabrication
+            </strong>
+            <span>
+              T Wang, Z Li, Y Chen, Y Wang, SH Lee, YS Lee, J Dong. Flexible and Printed Electronics 10 (4), 045006,
+              2025.
+            </span>
+          </li>
+          <li>
+            <strong>
+              Design of Actuation Waveforms for Precision Control of PEDOT:PSS Droplet Formation in Inkjet Printing
+            </strong>
+            <span>
+              Tiansong Wang, Yuan-Shin Lee, Jingyan Dong. 54th SME North American Manufacturing Research Conference
+              (NAMRC 54), 2026.
+            </span>
+          </li>
+        </ol>
+      </section>
     </main>
   );
 }
